@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const WHATSAPP_NUMBER = "27997028644";
+const WHATSAPP_NUMBER = "27997214070";
 const WHATSAPP_MSG = encodeURIComponent(
   "Olá, gostaria de tirar uma dúvida sobre o Retiro de Jovens.",
 );
@@ -168,7 +168,7 @@ function Index() {
                 Tudo o que você precisa saber
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-                Um tempo separado para descansar, adorar e criar memórias que ficam para sempre.
+                Um tempo separado para descansar, adorar a Deus e criar memórias que ficam para sempre.
               </p>
             </div>
           </Reveal>
