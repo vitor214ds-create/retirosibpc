@@ -67,12 +67,53 @@ function Index() {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  const INSCRICAO_WHATSAPP = "5527997028644";
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!form.verdade || !form.ciente) {
       toast.error("Confirme as declarações antes de enviar.");
       return;
     }
+
+    const campos: Array<[string, string]> = [
+      ["Nome completo", form.nome],
+      ["CPF", form.cpf],
+      ["Telefone", form.telefone],
+      ["Idade", form.idade],
+      ["Data de nascimento", form.nascimento],
+      ["Sexo", form.sexo],
+      ["Cidade", form.cidade],
+      ["Estado", form.estado],
+      ["Restrição alimentar", form.restricao === "sim" ? `Sim - ${form.restricaoDesc}` : "Não"],
+      ["Alergia", form.alergia === "sim" ? `Sim - ${form.alergiaDesc}` : "Não"],
+      ["Contato de emergência", form.emergNome],
+      ["Telefone de emergência", form.emergTel],
+      ["Observações", form.obs || "-"],
+      ["Declara veracidade", form.verdade ? "Sim" : "Não"],
+      ["Ciente das regras", form.ciente ? "Sim" : "Não"],
+    ];
+
+    // 1) Gera e baixa a planilha Excel com os dados
+    try {
+      const ws = XLSX.utils.aoa_to_sheet([["Campo", "Resposta"], ...campos]);
+      ws["!cols"] = [{ wch: 28 }, { wch: 50 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Inscrição");
+      const safeName = (form.nome || "inscricao").replace(/[^\p{L}\p{N}]+/gu, "_");
+      XLSX.writeFile(wb, `inscricao-${safeName}.xlsx`);
+    } catch (err) {
+      console.error(err);
+    }
+
+    // 2) Abre o WhatsApp do responsável com os dados preenchidos
+    const texto =
+      `*Nova inscrição - Retiro de Jovens 2026*\n\n` +
+      campos.map(([k, v]) => `*${k}:* ${v}`).join("\n") +
+      `\n\n_Planilha .xlsx baixada automaticamente - anexe no chat._`;
+    const url = `https://wa.me/${INSCRICAO_WHATSAPP}?text=${encodeURIComponent(texto)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+
     setSent(true);
     setTimeout(() => document.getElementById("sucesso")?.scrollIntoView({ behavior: "smooth" }), 50);
   };
