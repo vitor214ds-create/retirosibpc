@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { formatDate, type Memory } from "@/lib/memories";
+import { deleteMemory, formatDate, type Memory } from "@/lib/memories";
 import { Comments } from "@/components/Comments";
 
 export function MemoryCard({
@@ -52,8 +52,8 @@ export function MemoryCard({
 
   const removePost = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("posts").delete().eq("id", memory.id);
-      if (error) throw error;
+      if (!user) throw new Error("Faça login novamente.");
+      await deleteMemory(memory, user.id);
     },
     onSuccess: async () => {
       toast.success("Memória excluída.");
@@ -114,9 +114,15 @@ export function MemoryCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
-                onClick={() => removePost.mutate()}
+                onClick={() => {
+                  const confirmed = window.confirm(
+                    "Apagar esta memória? A foto, os comentários e as curtidas serão removidos definitivamente.",
+                  );
+                  if (confirmed) removePost.mutate();
+                }}
+                disabled={removePost.isPending}
               >
-                <Trash2 className="mr-2 size-4" /> Excluir memória
+                <Trash2 className="mr-2 size-4" /> {removePost.isPending ? "Apagando..." : "Apagar memória"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
