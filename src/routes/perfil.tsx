@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Camera, Heart, ImageIcon, Loader2, Save, Upload } from "lucide-react";
+import { ArrowLeft, Camera, Heart, ImageIcon, Loader2, Save, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Header } from "@/components/Header";
@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   fetchMemories,
   resolveAvatarUrls,
+  deleteMemory,
   uploadImage,
   validateImage,
 } from "@/lib/memories";
@@ -126,6 +127,20 @@ function ProfilePage() {
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
+
+  const removeMemory = useMutation({
+    mutationFn: async (memory: (typeof myMemories)[number]) => {
+      if (!user) throw new Error("Faça login novamente.");
+      await deleteMemory(memory, user.id);
+    },
+    onSuccess: async () => {
+      toast.success("Memória apagada.");
+      await queryClient.invalidateQueries({ queryKey: ["memories"] });
+      await queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Não foi possível apagar a memória."),
+  });
 
   if (loading || !user) {
     return (
@@ -352,6 +367,25 @@ function ProfilePage() {
                       </span>
                       <span>{memory.comments.length} comentários</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          "Apagar esta memória? A foto, os comentários e as curtidas serão removidos definitivamente.",
+                        );
+                        if (confirmed) removeMemory.mutate(memory);
+                      }}
+                      disabled={removeMemory.isPending}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-destructive/25 px-3 py-2 text-xs font-medium text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
+                    >
+                      {removeMemory.isPending ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-3.5" />
+                      )}
+                      {removeMemory.isPending ? "Apagando..." : "Apagar foto"}
+                    </button>
                   </div>
                 </article>
               ))}
