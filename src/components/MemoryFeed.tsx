@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import type { Memory } from "@/lib/memories";
 import { MemoryCard } from "@/components/MemoryCard";
 import { Reveal } from "@/components/Reveal";
+import { RETREAT_BACKGROUND } from "@/assets/retreat-background";
 
 type Filter = "todas" | "recentes" | "curtidas" | "minhas";
 
@@ -37,7 +38,14 @@ export function MemoryFeed({
   }, [memories, filter, user?.id]);
 
   return (
-    <section id="feed" className="relative bg-gradient-soft py-20">
+    <section id="feed" className="relative isolate overflow-hidden py-24">
+      <div
+        className="absolute inset-0 -z-30 bg-cover bg-center opacity-[0.08]"
+        style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 -z-20 bg-[linear-gradient(180deg,rgba(247,251,255,.98),rgba(235,246,252,.96),rgba(247,251,255,.99))]" aria-hidden />
+      <div className="absolute left-1/2 top-0 -z-10 h-64 w-[52rem] -translate-x-1/2 rounded-full bg-primary/8 blur-3xl" aria-hidden />
       <div className="mx-auto max-w-2xl px-4">
         <Reveal>
           <div className="text-center">
