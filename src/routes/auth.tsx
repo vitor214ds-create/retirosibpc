@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
+import { RETREAT_BACKGROUND } from "@/assets/retreat-background";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -93,7 +94,7 @@ function AuthPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
       <div
         className="absolute inset-0 -z-20 bg-deep-sea bg-cover bg-center"
-        style={{ backgroundImage: "url('/retiro-sibpc-memoria-bg.jpeg')" }}
+        style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
         aria-hidden
       />
       <div
