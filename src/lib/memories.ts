@@ -15,6 +15,7 @@ export type Memory = {
   caption: string | null;
   created_at: string;
   imageUrl: string | null;
+  imagePath: string;
   authorName: string;
   authorAvatar: string | null;
   likeCount: number;
@@ -93,6 +94,7 @@ export async function fetchMemories(currentUserId: string | null): Promise<Memor
       imageUrl: post.image_url.startsWith("http")
         ? post.image_url
         : (imageMap.get(post.image_url) ?? null),
+      imagePath: post.image_url,
       authorName: author?.display_name ?? "Participante",
       authorAvatar: resolveAvatar(author?.avatar_url ?? null),
       likeCount: postLikes.length,
@@ -147,6 +149,32 @@ export async function uploadImage(bucket: string, userId: string, file: File) {
   });
   if (error) throw error;
   return path;
+}
+
+export async function deleteMemory(memory: Memory, currentUserId: string) {
+  if (memory.user_id !== currentUserId) {
+    throw new Error("Você só pode apagar as suas próprias memórias.");
+  }
+
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", memory.id)
+    .eq("user_id", currentUserId);
+
+  if (error) throw error;
+
+  // O post já foi removido do banco. A limpeza do arquivo é best-effort
+  // para não deixar a memória "ressuscitar" caso o storage falhe.
+  if (memory.imagePath && !memory.imagePath.startsWith("http")) {
+    const { error: storageError } = await supabase.storage
+      .from("memories")
+      .remove([memory.imagePath]);
+
+    if (storageError) {
+      console.warn("Não foi possível limpar a imagem do storage:", storageError);
+    }
+  }
 }
 
 export function formatDate(iso: string) {
