@@ -1,6 +1,7 @@
 import { Camera, Heart, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
+import { RETREAT_BACKGROUND } from "@/assets/retreat-background";
 
 export function HeroMemory({
   stats,
@@ -13,7 +14,7 @@ export function HeroMemory({
     <section className="relative isolate flex min-h-[92svh] items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 -z-20 bg-deep-sea bg-cover bg-center"
-        style={{ backgroundImage: "url('/retiro-sibpc-memoria-bg.jpeg')" }}
+        style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
         aria-hidden
       />
       <div
