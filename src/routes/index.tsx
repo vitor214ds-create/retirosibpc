@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { HeroMemory } from "@/components/HeroMemory";
 import { MemoryFeed } from "@/components/MemoryFeed";
+import { FaithMessage } from "@/components/FaithMessage";
 import { CreateMemoryDialog } from "@/components/CreateMemoryDialog";
 import { Waves } from "@/components/Waves";
 import { useAuth } from "@/lib/auth";
@@ -51,6 +52,7 @@ function Home() {
       <Header />
       <main>
         <HeroMemory stats={stats} onShare={handleShare} />
+        <FaithMessage />
         <MemoryFeed
           memories={memories ?? []}
           isLoading={isLoading}
