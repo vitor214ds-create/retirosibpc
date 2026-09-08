@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { HeroMemory } from "@/components/HeroMemory";
 import { MemoryFeed } from "@/components/MemoryFeed";
 import { FaithMessage } from "@/components/FaithMessage";
+import { AmbientMusic } from "@/components/AmbientMusic";
 import { CreateMemoryDialog } from "@/components/CreateMemoryDialog";
 import { Waves } from "@/components/Waves";
 import { useAuth } from "@/lib/auth";
@@ -49,6 +50,7 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AmbientMusic />
       <Header />
       <main>
         <HeroMemory stats={stats} onShare={handleShare} />
