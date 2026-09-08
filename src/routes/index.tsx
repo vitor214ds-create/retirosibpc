@@ -60,7 +60,7 @@ function Home() {
       </main>
 
       <footer className="relative overflow-hidden bg-deep-sea pt-20 pb-12 text-center">
-        <Waves className="top-0 rotate-180" color="oklch(0.94 0.04 220)" />
+        <Waves flip className="absolute inset-x-0 top-0 text-background" />
         <div className="relative mx-auto max-w-xl px-6">
           <p className="font-display text-xs uppercase tracking-[0.42em] text-sand/80">
             Do raso ao profundo
