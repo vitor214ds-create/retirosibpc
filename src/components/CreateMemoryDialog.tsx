@@ -85,7 +85,7 @@ export function CreateMemoryDialog({
         }
       }}
     >
-      <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[94svh] w-[calc(100%-1rem)] overflow-y-auto rounded-[1.75rem] p-4 sm:w-full sm:max-w-lg sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Compartilhar memória</DialogTitle>
           <DialogDescription>
@@ -103,7 +103,7 @@ export function CreateMemoryDialog({
 
         {preview ? (
           <div className="relative overflow-hidden rounded-2xl border border-border">
-            <img src={preview} alt="Pré-visualização" className="max-h-80 w-full object-cover" />
+            <img src={preview} alt="Pré-visualização" className="max-h-[52svh] w-full bg-black/[0.03] object-contain sm:max-h-96" />
             <button
               type="button"
               onClick={reset}
@@ -124,7 +124,7 @@ export function CreateMemoryDialog({
               <ImagePlus className="size-6 text-primary" />
             </span>
             <span className="text-sm font-medium text-foreground">Selecionar foto</span>
-            <span className="text-xs text-muted-foreground">JPG, PNG ou WEBP • até 10 MB</span>
+            <span className="text-xs text-muted-foreground">JPG, PNG ou WEBP • até 8 MB</span>
           </button>
         )}
 
