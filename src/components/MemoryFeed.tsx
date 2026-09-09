@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth";
 import type { Memory } from "@/lib/memories";
 import { MemoryCard } from "@/components/MemoryCard";
 import { Reveal } from "@/components/Reveal";
-import { useRetreatPhotos } from "@/lib/useRetreatPhotos";
 
 type Filter = "todas" | "recentes" | "curtidas" | "minhas";
 
@@ -21,7 +20,6 @@ export function MemoryFeed({
   onRequireAuth: () => void;
 }) {
   const { user } = useAuth();
-  const photos = useRetreatPhotos();
   const [filter, setFilter] = useState<Filter>("todas");
 
   const filters: { key: Filter; label: string }[] = [
@@ -42,7 +40,7 @@ export function MemoryFeed({
     <section id="feed" className="relative isolate overflow-hidden py-24">
       <div
         className="absolute inset-0 -z-30 bg-cover bg-center opacity-[0.08]"
-        style={photos?.group ? { backgroundImage: `url("${photos.group}")` } : undefined}
+        style={{ backgroundImage: "url('/retiro-grupo.jpg')" }}
         aria-hidden
       />
       <div className="absolute inset-0 -z-20 bg-[linear-gradient(180deg,rgba(247,251,255,.98),rgba(235,246,252,.96),rgba(247,251,255,.99))]" aria-hidden />
