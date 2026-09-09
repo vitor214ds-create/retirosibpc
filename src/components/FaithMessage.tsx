@@ -1,12 +1,15 @@
 import { BookOpen, Heart, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
+import { useRetreatPhotos } from "@/lib/useRetreatPhotos";
 
 export function FaithMessage() {
+  const photos = useRetreatPhotos();
+
   return (
     <section id="mensagem" className="relative isolate overflow-hidden py-24 sm:py-28">
       <div
         className="absolute inset-0 -z-30 bg-cover bg-center bg-fixed opacity-55"
-        style={{ backgroundImage: "url('/retiro-foto')" }}
+        style={photos?.group ? { backgroundImage: `url("${photos.group}")` } : undefined}
         aria-hidden
       />
       <div
