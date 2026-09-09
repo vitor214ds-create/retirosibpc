@@ -1,7 +1,6 @@
 import { Camera, ChevronDown, Heart, MapPin, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
-import { RETREAT_BACKGROUND } from "@/assets/retreat-background";
 
 export function HeroMemory({
   stats,
@@ -14,7 +13,7 @@ export function HeroMemory({
     <section className="relative isolate min-h-[100svh] overflow-hidden">
       <div
         className="absolute inset-0 -z-30 scale-[1.03] bg-deep-sea bg-cover bg-[center_42%]"
-        style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
+        style={{ backgroundImage: "url('/retiro-foto')" }}
         aria-hidden
       />
       <div
@@ -109,7 +108,7 @@ export function HeroMemory({
             <div className="relative rotate-[2deg] overflow-hidden rounded-[2.25rem] border border-white/20 bg-white/10 p-3 shadow-[0_35px_90px_rgba(0,0,0,.42)] backdrop-blur-xl transition duration-500 hover:rotate-0 hover:scale-[1.015]">
               <div className="aspect-[4/5] overflow-hidden rounded-[1.7rem] bg-deep-sea">
                 <img
-                  src={RETREAT_BACKGROUND}
+                  src="/retiro-foto"
                   alt="Placa do Retiro de Jovens SIBPC — Do raso ao profundo"
                   className="h-full w-full object-cover object-center"
                   loading="eager"
