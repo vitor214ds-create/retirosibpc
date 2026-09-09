@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PerfilRouteImport } from './routes/perfil'
-import { Route as RetiroFotoRouteImport } from './routes/retiro-foto'
 import { Route as IndexRouteImport } from './routes/index'
 
 const AuthRoute = AuthRouteImport.update({
@@ -24,11 +23,6 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RetiroFotoRoute = RetiroFotoRouteImport.update({
-  id: '/retiro-foto',
-  path: '/retiro-foto',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -39,7 +33,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/perfil': typeof PerfilRoute
-  '/retiro-foto': typeof RetiroFotoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,17 +47,16 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/perfil' | '/retiro-foto'
+  fullPaths: '/' | '/auth' | '/perfil'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/perfil' | '/retiro-foto'
-  id: '__root__' | '/' | '/auth' | '/perfil' | '/retiro-foto'
+  to: '/' | '/auth' | '/perfil'
+  id: '__root__' | '/' | '/auth' | '/perfil'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   PerfilRoute: typeof PerfilRoute
-  RetiroFotoRoute: typeof RetiroFotoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,13 +75,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/retiro-foto': {
-      id: '/retiro-foto'
-      path: '/retiro-foto'
-      fullPath: '/retiro-foto'
-      preLoaderRoute: typeof RetiroFotoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -104,7 +89,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   PerfilRoute: PerfilRoute,
-  RetiroFotoRoute: RetiroFotoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
