@@ -28,6 +28,15 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const PUBLIC_AUTH_ORIGIN = "https://retirosibpc.lovable.app";
+
+function getAllowedAuthOrigin() {
+  if (typeof window === "undefined") return PUBLIC_AUTH_ORIGIN;
+  return window.location.hostname.endsWith(".vercel.app")
+    ? PUBLIC_AUTH_ORIGIN
+    : window.location.origin;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,6 +51,28 @@ function AuthPage() {
     if (user) navigate({ to: "/", replace: true });
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("provider") === "google" && !user && !busy) {
+      void (async () => {
+        setBusy(true);
+        try {
+          const result = await lovable.auth.signInWithOAuth("google", {
+            redirect_uri: PUBLIC_AUTH_ORIGIN,
+          });
+          if (result.error) {
+            toast.error("Não foi possível entrar com o Google.");
+          }
+        } finally {
+          setBusy(false);
+        }
+      })();
+    }
+    // Executa apenas na entrada da rota para evitar reiniciar o OAuth.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -51,7 +82,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: getAllowedAuthOrigin(),
             data: { full_name: name.trim() || email.split("@")[0] },
           },
         });
@@ -74,10 +105,18 @@ function AuthPage() {
   };
 
   const google = async () => {
+    // O broker OAuth do Lovable só aceita origens autorizadas.
+    // Em Vercel, iniciamos o login no domínio público autorizado
+    // para evitar "redirect_uri is not allowed".
+    if (window.location.hostname.endsWith(".vercel.app")) {
+      window.location.assign(`${PUBLIC_AUTH_ORIGIN}/auth?provider=google`);
+      return;
+    }
+
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: getAllowedAuthOrigin(),
       });
       if (result.error) {
         toast.error("Não foi possível entrar com o Google.");
