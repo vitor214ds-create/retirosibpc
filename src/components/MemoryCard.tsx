@@ -138,7 +138,7 @@ export function MemoryCard({
             src={memory.imageUrl}
             alt={memory.caption ?? "Memória do retiro"}
             loading="lazy"
-            className="max-h-[70vh] w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+            className="max-h-[72svh] w-full bg-black/[0.03] object-contain transition duration-500 group-hover:scale-[1.01] sm:max-h-[78vh]"
           />
         ) : (
           <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
@@ -194,12 +194,12 @@ export function MemoryCard({
       </div>
 
       <Dialog open={lightbox} onOpenChange={setLightbox}>
-        <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
+        <DialogContent className="w-[calc(100%-1rem)] max-w-5xl border-none bg-transparent p-0 shadow-none sm:w-full">
           {memory.imageUrl && (
             <img
               src={memory.imageUrl}
               alt={memory.caption ?? "Memória do retiro"}
-              className="max-h-[85svh] w-full rounded-2xl object-contain"
+              className="max-h-[88svh] w-full rounded-2xl bg-black/90 object-contain"
             />
           )}
         </DialogContent>
