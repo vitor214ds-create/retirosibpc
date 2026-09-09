@@ -1,15 +1,21 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+// @lovable.dev/vite-tanstack-config já inclui TanStack Start, React,
+// Tailwind, aliases, SSR e Nitro para o ambiente Lovable.
+// No Vercel precisamos trocar explicitamente o preset do Nitro,
+// caso contrário o build pode sair no formato Cloudflare e as rotas SSR retornarem 404.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+const isVercel = Boolean(process.env.VERCEL);
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
   },
+
+  // Lovable mantém o comportamento padrão no preview.
+  // Vercel recebe um output Nitro compatível com Vercel Functions.
+  nitro: isVercel
+    ? {
+        preset: "vercel",
+      }
+    : true,
 });
