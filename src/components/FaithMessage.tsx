@@ -1,13 +1,12 @@
 import { BookOpen, Heart, Sparkles } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { RETREAT_BACKGROUND } from "@/assets/retreat-background";
 
 export function FaithMessage() {
   return (
     <section id="mensagem" className="relative isolate overflow-hidden py-24 sm:py-28">
       <div
         className="absolute inset-0 -z-30 bg-cover bg-center bg-fixed opacity-55"
-        style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
+        style={{ backgroundImage: "url('/retiro-foto')" }}
         aria-hidden
       />
       <div
