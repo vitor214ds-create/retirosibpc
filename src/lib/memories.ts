@@ -128,23 +128,38 @@ export async function fetchStats() {
 }
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 export function validateImage(file: File): string | null {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return "Formato não aceito. Use JPG, PNG ou WEBP.";
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return "A imagem precisa ter no máximo 10 MB.";
+    return "A imagem precisa ter no máximo 8 MB.";
   }
   return null;
 }
 
-export async function uploadImage(bucket: string, userId: string, file: File) {
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+export async function uploadImage(
+  bucket: "memories" | "avatars",
+  userId: string,
+  file: File,
+) {
+  const problem = validateImage(file);
+  if (problem) throw new Error(problem);
+
+  const extensionByMime: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = extensionByMime[file.type];
+  if (!ext) throw new Error("Formato de imagem inválido.");
+
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
     contentType: file.type,
+    cacheControl: "3600",
     upsert: false,
   });
   if (error) throw error;
