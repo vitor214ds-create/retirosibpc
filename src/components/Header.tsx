@@ -33,8 +33,8 @@ export function Header() {
   const initials = (profile?.display_name ?? "P").slice(0, 1).toUpperCase();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-deep-sea/40 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-deep-sea/50 backdrop-blur-2xl supports-[backdrop-filter]:bg-deep-sea/35">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6 lg:px-8">
         <Link to="/" className="group flex items-center gap-2">
           <span className="flex size-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition group-hover:bg-white/20">
             <Waves className="size-4 text-sand" />
