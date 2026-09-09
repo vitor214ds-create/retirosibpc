@@ -1,6 +1,7 @@
 import { Camera, ChevronDown, Heart, MapPin, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
+import { useRetreatPhotos } from "@/lib/useRetreatPhotos";
 
 export function HeroMemory({
   stats,
@@ -9,11 +10,13 @@ export function HeroMemory({
   stats: { memories: number; participants: number } | undefined;
   onShare: () => void;
 }) {
+  const photos = useRetreatPhotos();
+
   return (
     <section className="relative isolate min-h-[100svh] overflow-hidden">
       <div
         className="absolute inset-0 -z-30 scale-[1.03] bg-deep-sea bg-cover bg-[center_42%]"
-        style={{ backgroundImage: "url('/retiro-foto')" }}
+        style={photos?.group ? { backgroundImage: `url("${photos.group}")` } : undefined}
         aria-hidden
       />
       <div
@@ -108,11 +111,12 @@ export function HeroMemory({
             <div className="relative rotate-[2deg] overflow-hidden rounded-[2.25rem] border border-white/20 bg-white/10 p-3 shadow-[0_35px_90px_rgba(0,0,0,.42)] backdrop-blur-xl transition duration-500 hover:rotate-0 hover:scale-[1.015]">
               <div className="aspect-[4/5] overflow-hidden rounded-[1.7rem] bg-deep-sea">
                 <img
-                  src="/retiro-foto"
+                  src={photos?.plaque}
                   alt="Placa do Retiro de Jovens SIBPC — Do raso ao profundo"
                   className="h-full w-full object-cover object-center"
                   loading="eager"
                   decoding="async"
+                  onError={(event) => { event.currentTarget.style.display = "none"; }}
                 />
               </div>
               <div className="absolute inset-x-8 bottom-8 rounded-2xl border border-white/15 bg-deep-sea/70 px-5 py-4 backdrop-blur-xl">
