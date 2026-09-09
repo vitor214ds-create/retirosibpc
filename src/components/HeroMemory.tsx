@@ -107,10 +107,15 @@ export function HeroMemory({
           <div className="relative mx-auto hidden w-full max-w-md lg:block">
             <div className="absolute -inset-5 rounded-[2.5rem] bg-white/8 blur-xl" />
             <div className="relative rotate-[2deg] overflow-hidden rounded-[2.25rem] border border-white/20 bg-white/10 p-3 shadow-[0_35px_90px_rgba(0,0,0,.42)] backdrop-blur-xl transition duration-500 hover:rotate-0 hover:scale-[1.015]">
-              <div
-                className="aspect-[4/5] rounded-[1.7rem] bg-cover bg-center"
-                style={{ backgroundImage: `url("${RETREAT_BACKGROUND}")` }}
-              />
+              <div className="aspect-[4/5] overflow-hidden rounded-[1.7rem] bg-deep-sea">
+                <img
+                  src={RETREAT_BACKGROUND}
+                  alt="Placa do Retiro de Jovens SIBPC — Do raso ao profundo"
+                  className="h-full w-full object-cover object-center"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
               <div className="absolute inset-x-8 bottom-8 rounded-2xl border border-white/15 bg-deep-sea/70 px-5 py-4 backdrop-blur-xl">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-sand/75">
                   Uma lembrança que fica
