@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 const VIDEO_ID = "J2rTdu7vqTE";
-const PLAYER_ELEMENT_ID = "retreat-ambient-music-player";
+const PLAYER_HOST_ID = "retreat-ambient-music-singleton";
+const PLAYER_TARGET_ID = "retreat-ambient-music-target";
 
 type YouTubePlayer = {
   playVideo: () => void;
@@ -10,7 +11,6 @@ type YouTubePlayer = {
   unMute: () => void;
   setVolume: (volume: number) => void;
   getPlayerState: () => number;
-  destroy: () => void;
 };
 
 type YouTubePlayerEvent = {
@@ -40,259 +40,285 @@ type YouTubeNamespace = {
   };
 };
 
+type AmbientState = {
+  initialized: boolean;
+  player: YouTubePlayer | null;
+  ready: boolean;
+  unlocked: boolean;
+  pauseReasons: Set<string>;
+  activeVideos: Set<HTMLVideoElement>;
+  embeddedVideoOpen: boolean;
+  observer: MutationObserver | null;
+};
+
 declare global {
   interface Window {
     YT?: YouTubeNamespace;
     onYouTubeIframeAPIReady?: () => void;
+    __retreatAmbientMusic?: AmbientState;
+  }
+}
+
+function getAmbientState(): AmbientState {
+  if (!window.__retreatAmbientMusic) {
+    window.__retreatAmbientMusic = {
+      initialized: false,
+      player: null,
+      ready: false,
+      unlocked: false,
+      pauseReasons: new Set<string>(),
+      activeVideos: new Set<HTMLVideoElement>(),
+      embeddedVideoOpen: false,
+      observer: null,
+    };
+  }
+  return window.__retreatAmbientMusic;
+}
+
+function isPaused(state: AmbientState) {
+  return state.pauseReasons.size > 0;
+}
+
+function playAmbient(state: AmbientState) {
+  if (!state.player || !state.ready || isPaused(state)) return;
+
+  state.player.setVolume(45);
+  state.player.playVideo();
+
+  if (state.unlocked) {
+    state.player.unMute();
+  } else {
+    state.player.mute();
+  }
+}
+
+function pauseAmbient(state: AmbientState, reason: string) {
+  state.pauseReasons.add(reason);
+  state.player?.pauseVideo();
+}
+
+function resumeAmbient(state: AmbientState, reason: string) {
+  state.pauseReasons.delete(reason);
+  if (!isPaused(state)) playAmbient(state);
+}
+
+function hasOpenEmbeddedVideo() {
+  const dialogs = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[role="dialog"][data-state="open"], [data-state="open"][role="dialog"]',
+    ),
+  );
+
+  return dialogs.some((dialog) =>
+    Boolean(
+      dialog.querySelector(
+        'video, iframe[src*="youtube.com"], iframe[src*="youtu.be"], iframe[src*="vimeo.com"]',
+      ),
+    ),
+  );
+}
+
+function ensurePlayerHost() {
+  let host = document.getElementById(PLAYER_HOST_ID);
+
+  if (!host) {
+    host = document.createElement("div");
+    host.id = PLAYER_HOST_ID;
+    host.setAttribute("aria-hidden", "true");
+    host.style.position = "fixed";
+    host.style.left = "-10000px";
+    host.style.top = "0";
+    host.style.width = "1px";
+    host.style.height = "1px";
+    host.style.overflow = "hidden";
+    host.style.opacity = "0";
+    host.style.pointerEvents = "none";
+
+    const target = document.createElement("div");
+    target.id = PLAYER_TARGET_ID;
+    host.appendChild(target);
+    document.body.appendChild(host);
+  }
+
+  return host;
+}
+
+function setupGlobalListeners(state: AmbientState) {
+  const unlock = () => {
+    state.unlocked = true;
+
+    if (!isPaused(state) && state.player && state.ready) {
+      state.player.setVolume(45);
+      state.player.unMute();
+      state.player.playVideo();
+    }
+  };
+
+  const onVideoPlay = (event: Event) => {
+    const video = event.target;
+    if (!(video instanceof HTMLVideoElement)) return;
+    state.activeVideos.add(video);
+    pauseAmbient(state, "native-video");
+  };
+
+  const onVideoStop = (event: Event) => {
+    const video = event.target;
+    if (!(video instanceof HTMLVideoElement)) return;
+    state.activeVideos.delete(video);
+
+    if (state.activeVideos.size === 0) {
+      resumeAmbient(state, "native-video");
+    }
+  };
+
+  const syncEmbeddedVideo = () => {
+    const open = hasOpenEmbeddedVideo();
+    if (open === state.embeddedVideoOpen) return;
+
+    state.embeddedVideoOpen = open;
+    if (open) pauseAmbient(state, "embedded-video");
+    else resumeAmbient(state, "embedded-video");
+  };
+
+  const onFullscreenChange = () => {
+    const element = document.fullscreenElement;
+    const containsVideo =
+      !!element &&
+      (element.tagName === "VIDEO" ||
+        Boolean(element.querySelector?.('video, iframe[src*="youtube"], iframe[src*="vimeo"]')));
+
+    if (containsVideo) pauseAmbient(state, "fullscreen-video");
+    else resumeAmbient(state, "fullscreen-video");
+  };
+
+  const onCustomOpen = () => pauseAmbient(state, "custom-video");
+  const onCustomClose = () => resumeAmbient(state, "custom-video");
+
+  document.addEventListener("play", onVideoPlay, true);
+  document.addEventListener("pause", onVideoStop, true);
+  document.addEventListener("ended", onVideoStop, true);
+  document.addEventListener("fullscreenchange", onFullscreenChange);
+
+  window.addEventListener("retreat:video-open", onCustomOpen);
+  window.addEventListener("retreat:video-close", onCustomClose);
+
+  // Um único conjunto de listeners. O primeiro gesto apenas DESMUTA o player existente;
+  // nunca cria um segundo player.
+  window.addEventListener("pointerdown", unlock, { passive: true });
+  window.addEventListener("touchstart", unlock, { passive: true });
+  window.addEventListener("keydown", unlock);
+
+  state.observer = new MutationObserver(syncEmbeddedVideo);
+  state.observer.observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["data-state", "open", "class"],
+  });
+
+  syncEmbeddedVideo();
+}
+
+function createYouTubePlayer(state: AmbientState) {
+  if (state.player || !window.YT?.Player) return;
+
+  ensurePlayerHost();
+
+  state.player = new window.YT.Player(PLAYER_TARGET_ID, {
+    videoId: VIDEO_ID,
+    width: 1,
+    height: 1,
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      disablekb: 1,
+      fs: 0,
+      loop: 1,
+      playlist: VIDEO_ID,
+      playsinline: 1,
+      rel: 0,
+      modestbranding: 1,
+      iv_load_policy: 3,
+    },
+    events: {
+      onReady: ({ target }) => {
+        state.ready = true;
+        target.setVolume(45);
+
+        // Autoplay permitido pelos navegadores: começa mudo.
+        // Se o domínio tiver permissão para som, o primeiro gesto não cria outra música:
+        // apenas desmuta esta mesma instância.
+        target.mute();
+        if (!isPaused(state)) target.playVideo();
+      },
+      onStateChange: ({ target, data }) => {
+        if (!window.YT) return;
+
+        if (data === window.YT.PlayerState.ENDED && !isPaused(state)) {
+          target.playVideo();
+        }
+      },
+      onError: () => {
+        // O memorial continua utilizável caso o provedor externo falhe.
+      },
+    },
+  });
+}
+
+function initializeAmbientMusic() {
+  const state = getAmbientState();
+
+  // É a trava que impede React StrictMode, navegação ou remount de criar duas músicas.
+  if (state.initialized) {
+    playAmbient(state);
+    return;
+  }
+
+  state.initialized = true;
+
+  // Limpa vestígios de implementações anteriores antes de criar o singleton.
+  document
+    .querySelectorAll(
+      '#retreat-ambient-music-player, iframe[title="Trilha ambiente do memorial"]',
+    )
+    .forEach((node) => node.remove());
+
+  setupGlobalListeners(state);
+  ensurePlayerHost();
+
+  if (window.YT?.Player) {
+    createYouTubePlayer(state);
+    return;
+  }
+
+  const previousReady = window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady = () => {
+    previousReady?.();
+    createYouTubePlayer(state);
+  };
+
+  if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    document.head.appendChild(script);
   }
 }
 
 export function AmbientMusic() {
-  const playerRef = useRef<YouTubePlayer | null>(null);
-
   useEffect(() => {
-    let destroyed = false;
-    let userUnlockedAudio = false;
-    const pauseReasons = new Set<string>();
-    const activeNativeVideos = new Set<HTMLVideoElement>();
-
-    const shouldBePaused = () => pauseReasons.size > 0;
-
-    const tryStartWithSound = () => {
-      const player = playerRef.current;
-      if (!player || shouldBePaused()) return;
-
-      try {
-        player.setVolume(45);
-        player.unMute();
-        player.playVideo();
-      } catch {
-        // O primeiro gesto do usuário tenta novamente.
-      }
-    };
-
-    const startAutoplay = () => {
-      const player = playerRef.current;
-      if (!player || shouldBePaused()) return;
-
-      // Primeiro tenta tocar com som. Navegadores que já deram permissão ao domínio
-      // reproduzem imediatamente. Se a política bloquear, o primeiro gesto libera.
-      player.setVolume(45);
-      player.playVideo();
-      player.unMute();
-
-      window.setTimeout(() => {
-        if (!destroyed && !shouldBePaused()) {
-          player.playVideo();
-          player.unMute();
-        }
-      }, 350);
-    };
-
-    const pauseAmbient = (reason: string) => {
-      pauseReasons.add(reason);
-      playerRef.current?.pauseVideo();
-    };
-
-    const resumeAmbient = (reason: string) => {
-      pauseReasons.delete(reason);
-      if (shouldBePaused()) return;
-
-      const player = playerRef.current;
-      if (!player) return;
-
-      player.setVolume(45);
-      if (userUnlockedAudio) player.unMute();
-      player.playVideo();
-    };
-
-    const unlockAudio = () => {
-      userUnlockedAudio = true;
-      tryStartWithSound();
-    };
-
-    const handleNativePlay = (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLVideoElement)) return;
-      activeNativeVideos.add(target);
-      pauseAmbient("native-video");
-    };
-
-    const handleNativeStop = (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLVideoElement)) return;
-      activeNativeVideos.delete(target);
-      if (activeNativeVideos.size === 0) resumeAmbient("native-video");
-    };
-
-    const hasOpenEmbeddedVideo = () => {
-      const openDialogs = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          '[role="dialog"][data-state="open"], [data-state="open"][role="dialog"]',
-        ),
-      );
-
-      return openDialogs.some((dialog) =>
-        Boolean(
-          dialog.querySelector(
-            'video, iframe[src*="youtube.com"], iframe[src*="youtu.be"], iframe[src*="vimeo.com"]',
-          ),
-        ),
-      );
-    };
-
-    let embeddedVideoOpen = false;
-    const syncEmbeddedVideos = () => {
-      const next = hasOpenEmbeddedVideo();
-      if (next === embeddedVideoOpen) return;
-      embeddedVideoOpen = next;
-
-      if (next) pauseAmbient("embedded-video-dialog");
-      else resumeAmbient("embedded-video-dialog");
-    };
-
-    const observer = new MutationObserver(syncEmbeddedVideos);
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["data-state", "open", "class"],
-    });
-
-    const handleFullscreenChange = () => {
-      const fullscreen = document.fullscreenElement;
-      if (
-        fullscreen &&
-        (fullscreen.tagName === "VIDEO" ||
-          Boolean(fullscreen.querySelector?.("video, iframe")))
-      ) {
-        pauseAmbient("fullscreen-video");
-      } else {
-        resumeAmbient("fullscreen-video");
-      }
-    };
-
-    const handleVideoOpen = () => pauseAmbient("custom-video");
-    const handleVideoClose = () => resumeAmbient("custom-video");
-
-    document.addEventListener("play", handleNativePlay, true);
-    document.addEventListener("pause", handleNativeStop, true);
-    document.addEventListener("ended", handleNativeStop, true);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-    window.addEventListener("retreat:video-open", handleVideoOpen);
-    window.addEventListener("retreat:video-close", handleVideoClose);
-
-    // Fallback exigido pelos navegadores que bloqueiam autoplay com som.
-    window.addEventListener("pointerdown", unlockAudio, { passive: true });
-    window.addEventListener("touchstart", unlockAudio, { passive: true });
-    window.addEventListener("keydown", unlockAudio);
-
-    const createPlayer = () => {
-      if (destroyed || playerRef.current || !window.YT?.Player) return;
-
-      playerRef.current = new window.YT.Player(PLAYER_ELEMENT_ID, {
-        videoId: VIDEO_ID,
-        width: 1,
-        height: 1,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          loop: 1,
-          playlist: VIDEO_ID,
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-        },
-        events: {
-          onReady: ({ target }) => {
-            target.setVolume(45);
-            startAutoplay();
-          },
-          onStateChange: ({ target, data }) => {
-            if (!window.YT) return;
-
-            if (data === window.YT.PlayerState.ENDED && !shouldBePaused()) {
-              target.playVideo();
-            }
-
-            if (
-              data === window.YT.PlayerState.PLAYING &&
-              !shouldBePaused() &&
-              userUnlockedAudio
-            ) {
-              target.setVolume(45);
-              target.unMute();
-            }
-          },
-          onError: () => {
-            // Mantém a página funcional mesmo se o player externo falhar.
-          },
-        },
-      });
-    };
-
-    if (window.YT?.Player) {
-      createPlayer();
-    } else {
-      const existing = document.querySelector<HTMLScriptElement>(
-        'script[src="https://www.youtube.com/iframe_api"]',
-      );
-
-      const previousReady = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        previousReady?.();
-        createPlayer();
-      };
-
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://www.youtube.com/iframe_api";
-        script.async = true;
-        document.head.appendChild(script);
-      }
-    }
-
-    syncEmbeddedVideos();
-
-    return () => {
-      destroyed = true;
-      observer.disconnect();
-
-      document.removeEventListener("play", handleNativePlay, true);
-      document.removeEventListener("pause", handleNativeStop, true);
-      document.removeEventListener("ended", handleNativeStop, true);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-
-      window.removeEventListener("retreat:video-open", handleVideoOpen);
-      window.removeEventListener("retreat:video-close", handleVideoClose);
-
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
-
-      playerRef.current?.destroy();
-      playerRef.current = null;
-    };
+    initializeAmbientMusic();
   }, []);
 
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed -left-[10000px] top-0 h-px w-px overflow-hidden opacity-0"
-    >
-      <div id={PLAYER_ELEMENT_ID} />
-    </div>
-  );
+  return null;
 }
 
 export function notifyRetreatVideoOpened() {
-  window.dispatchEvent(new Event("retreat:video-open"));
+  const state = getAmbientState();
+  pauseAmbient(state, "custom-video");
 }
 
 export function notifyRetreatVideoClosed() {
-  window.dispatchEvent(new Event("retreat:video-close"));
+  const state = getAmbientState();
+  resumeAmbient(state, "custom-video");
 }
