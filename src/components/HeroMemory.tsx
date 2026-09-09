@@ -1,7 +1,6 @@
 import { Camera, ChevronDown, Heart, MapPin, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
-import { useRetreatPhotos } from "@/lib/useRetreatPhotos";
 import { useDeviceProfile } from "@/lib/useDeviceProfile";
 
 export function HeroMemory({
@@ -11,7 +10,6 @@ export function HeroMemory({
   stats: { memories: number; participants: number } | undefined;
   onShare: () => void;
 }) {
-  const photos = useRetreatPhotos();
   const device = useDeviceProfile();
 
   return (
@@ -19,15 +17,13 @@ export function HeroMemory({
       data-device={device.mode}
       className="relative isolate min-h-[100svh] overflow-hidden bg-deep-sea"
     >
-      {photos?.group ? (
-        <img
-          src={photos.group}
-          alt=""
-          aria-hidden
-          fetchPriority="high"
-          className="absolute inset-0 -z-30 h-full w-full object-cover object-[center_44%] md:object-center"
-        />
-      ) : null}
+      <img
+        src="/retiro-grupo.jpg"
+        alt=""
+        aria-hidden
+        fetchPriority="high"
+        className="absolute inset-0 -z-30 h-full w-full object-cover object-[center_44%] md:object-center"
+      />
 
       <div
         className="absolute inset-0 -z-20 bg-[linear-gradient(180deg,rgba(4,20,39,.78)_0%,rgba(5,27,51,.60)_34%,rgba(5,25,47,.77)_72%,rgba(4,18,35,.98)_100%)] lg:bg-[linear-gradient(90deg,rgba(4,19,37,.95)_0%,rgba(6,31,56,.84)_42%,rgba(7,36,64,.48)_72%,rgba(4,19,37,.72)_100%)]"
@@ -111,14 +107,14 @@ export function HeroMemory({
 
           {device.mode !== "desktop" && (
             <Reveal delay={420}>
-              <PlaqueMemoryCard imageUrl={photos?.plaque ?? null} compact />
+              <PlaqueMemoryCard imageUrl="/retiro-placa.jpg" compact />
             </Reveal>
           )}
         </div>
 
         {device.mode === "desktop" && (
           <Reveal delay={260}>
-            <PlaqueMemoryCard imageUrl={photos?.plaque ?? null} />
+            <PlaqueMemoryCard imageUrl="/retiro-placa.jpg" />
           </Reveal>
         )}
       </div>
